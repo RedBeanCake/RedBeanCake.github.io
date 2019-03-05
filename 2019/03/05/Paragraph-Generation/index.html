@@ -1,0 +1,534 @@
+
+<!DOCTYPE html>
+<html lang="zh-cn">
+    
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="generator" content="JQ">
+    <title>Paragraph Generation - JQ</title>
+    <meta name="author" content="JQ">
+    
+    
+    
+    <script type="application/ld+json">{"@context":"http://schema.org","@type":"BlogPosting","author":{"@type":"Person","name":"JQ","sameAs":["https://github.com/","http://stackoverflow.com/users","https://twitter.com/","https://facebook.com/","https://plus.google.com/","https://www.linkedin.com/profile/","mailto"],"image":"IMG_0076.JPG"},"articleBody":"2018.08 - 2019.02期间在JD时关于paragraph generation的实验记录和心得体会。\n\n实验记录数据及处理\n主要涉及数据集，paragraph文本的处理和特征的提取。\n\nDataset\nStandford Paragraph Dataset\nPart of Visual Genome and annotated by Fei-Fei Li’s group. The json file and the split files can be found at the aforementioned website. One can download the images according to the urls provided in the json file which looks like:\n[{&quot;url&quot;: &quot;https://cs.stanford.edu/people/rak248/VG_100K/2356347.jpg&quot;, &quot;image_id&quot;: 2356347, &quot;paragraph&quot;: &quot;A large building with bars on the windows in front of it. There is people walking in front of the building. There is a street in front of the building with many cars on it. &quot;}, …]\n\nMS COCO\nMS COCO is used for pre-training of all the models.\n\n\nData Pre-processing\nBuild ground truth (change gt into evaluation format)\nBuild vocabulary (As we pretrain models with COCO data, the vocabulary is built with COCO training captions [all 11415 words,  omitting words &lt; 4]. The original version written by me is slow, referring to Ruotian Luo’s code would be better.)\nBuild encode data (to save the image ids/image feat ids/encoded captions in to a json file for training)\n\nFeat ExtractionSimilar to the Bottom-Up feature, we use VGG-16 instead of Resnet. The network and the solver is provided at the  the Bottom-Up website, but some modifications are needed. The model is trained on Visual Genome with 90w iterations.\nThen we extract COCO feature and Stanford Paragraph feature with the saved model. Each feature has the size of [50, 4096], 50 means 50 regions, same as baselines.\n模型及训练The Proposed CAE-LSTM全称是Convolutional Auto-Encoding plus LSTM（姚老师起的）。\n心得体会（To be continue）\n","dateCreated":"2019-03-05T20:22:40+08:00","dateModified":"2019-03-05T21:50:54+08:00","datePublished":"2019-03-05T20:22:40+08:00","description":"2018.08 - 2019.02期间在JD时关于paragraph generation的实验记录和心得体会。","headline":"Paragraph Generation","image":[],"mainEntityOfPage":{"@type":"WebPage","@id":"http://yoursite.com/2019/03/05/Paragraph-Generation/"},"publisher":{"@type":"Organization","name":"JQ","sameAs":["https://github.com/","http://stackoverflow.com/users","https://twitter.com/","https://facebook.com/","https://plus.google.com/","https://www.linkedin.com/profile/","mailto"],"image":"IMG_0076.JPG","logo":{"@type":"ImageObject","url":"IMG_0076.JPG"}},"url":"http://yoursite.com/2019/03/05/Paragraph-Generation/","keywords":"research, vision and language, paragraph generation"}</script>
+    <meta name="description" content="2018.08 - 2019.02期间在JD时关于paragraph generation的实验记录和心得体会。">
+<meta name="keywords" content="research,vision and language,paragraph generation">
+<meta property="og:type" content="blog">
+<meta property="og:title" content="Paragraph Generation">
+<meta property="og:url" content="http://yoursite.com/2019/03/05/Paragraph-Generation/index.html">
+<meta property="og:site_name" content="JQ">
+<meta property="og:description" content="2018.08 - 2019.02期间在JD时关于paragraph generation的实验记录和心得体会。">
+<meta property="og:locale" content="zh-cn">
+<meta property="og:updated_time" content="2019-03-05T13:50:54.630Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="Paragraph Generation">
+<meta name="twitter:description" content="2018.08 - 2019.02期间在JD时关于paragraph generation的实验记录和心得体会。">
+    
+    
+        
+    
+    
+        <meta property="og:image" content="http://yoursite.com/assets/images/IMG_0076.JPG"/>
+    
+    
+    
+    
+    <!--STYLES-->
+    <link rel="stylesheet" href="/assets/css/style-du2xmrqdqrl2ollgeiw050kpl6l4nbyz7bumjuurjgsxyopifvukebxc9lqe.min.css">
+    <!--STYLES END-->
+    
+
+    
+</head>
+
+    <body>
+        <div id="blog">
+            <!-- Define author's picture -->
+
+
+    
+        
+            
+        
+    
+
+<header id="header" data-behavior="4">
+    <i id="btn-open-sidebar" class="fa fa-lg fa-bars"></i>
+    <div class="header-title">
+        <a class="header-title-link" href="/ ">JQ</a>
+    </div>
+    
+        
+            <a class="header-right-picture " href="#about">
+        
+        
+            <img class="header-picture" src="/assets/images/IMG_0076.JPG" alt="作者的图片">
+        
+        </a>
+    
+</header>
+
+            <!-- Define author's picture -->
+
+
+
+        
+    
+
+<nav id="sidebar" data-behavior="4">
+    <div class="sidebar-container">
+        
+            <div class="sidebar-profile">
+                <a href="/#about">
+                    <img class="sidebar-profile-picture" src="/assets/images/IMG_0076.JPG" alt="作者的图片">
+                </a>
+                <h4 class="sidebar-profile-name">JQ</h4>
+                
+                    <h5 class="sidebar-profile-bio"><p>author.bio</p>
+</h5>
+                
+            </div>
+        
+        
+            <ul class="sidebar-buttons">
+            
+                <li class="sidebar-button">
+                    
+                        <a class="sidebar-button-link " href="/ " title="首页">
+                    
+                        <i class="sidebar-button-icon fa fa-home" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">首页</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a class="sidebar-button-link " href="/all-categories" title="分类">
+                    
+                        <i class="sidebar-button-icon fa fa-bookmark" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">分类</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a class="sidebar-button-link " href="/all-tags" title="标签">
+                    
+                        <i class="sidebar-button-icon fa fa-tags" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">标签</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a class="sidebar-button-link " href="/all-archives" title="归档">
+                    
+                        <i class="sidebar-button-icon fa fa-archive" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">归档</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a class="sidebar-button-link open-algolia-search" href="#search" title="搜索">
+                    
+                        <i class="sidebar-button-icon fa fa-search" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">搜索</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a class="sidebar-button-link " href="#about" title="关于">
+                    
+                        <i class="sidebar-button-icon fa fa-question" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">关于</span>
+                    </a>
+            </li>
+            
+        </ul>
+        
+            <ul class="sidebar-buttons">
+            
+                <li class="sidebar-button">
+                    
+                        <a class="sidebar-button-link " href="https://github.com/" target="_blank" rel="noopener" title="GitHub">
+                    
+                        <i class="sidebar-button-icon fab fa-github" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">GitHub</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a class="sidebar-button-link " href="http://stackoverflow.com/users" target="_blank" rel="noopener" title="Stack Overflow">
+                    
+                        <i class="sidebar-button-icon fab fa-stack-overflow" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">Stack Overflow</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a class="sidebar-button-link " href="https://twitter.com/" target="_blank" rel="noopener" title="Twitter">
+                    
+                        <i class="sidebar-button-icon fab fa-twitter" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">Twitter</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a class="sidebar-button-link " href="https://facebook.com/" target="_blank" rel="noopener" title="Facebook">
+                    
+                        <i class="sidebar-button-icon fab fa-facebook" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">Facebook</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a class="sidebar-button-link " href="https://plus.google.com/" target="_blank" rel="noopener" title="Google Plus">
+                    
+                        <i class="sidebar-button-icon fab fa-google-plus" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">Google Plus</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a class="sidebar-button-link " href="https://www.linkedin.com/profile/" target="_blank" rel="noopener" title="LinkedIn">
+                    
+                        <i class="sidebar-button-icon fab fa-linkedin" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">LinkedIn</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a class="sidebar-button-link " href="/mailto" title="邮箱">
+                    
+                        <i class="sidebar-button-icon fa fa-envelope" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">邮箱</span>
+                    </a>
+            </li>
+            
+        </ul>
+        
+            <ul class="sidebar-buttons">
+            
+                <li class="sidebar-button">
+                    
+                        <a class="sidebar-button-link " href="/atom.xml" title="RSS">
+                    
+                        <i class="sidebar-button-icon fa fa-rss" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">RSS</span>
+                    </a>
+            </li>
+            
+        </ul>
+        
+    </div>
+</nav>
+
+            
+            <div id="main" data-behavior="4"
+                 class="
+                        hasCoverMetaIn
+                        ">
+                
+<article class="post">
+    
+    
+        <div class="post-header main-content-wrap text-left">
+    
+        <h1 class="post-title">
+            Paragraph Generation
+        </h1>
+    
+    
+        <div class="post-meta">
+    <time datetime="2019-03-05T20:22:40+08:00">
+	
+		    3月 05, 2019
+    	
+    </time>
+    
+</div>
+
+    
+</div>
+
+    
+    <div class="post-content markdown">
+        <div class="main-content-wrap">
+            <p>2018.08 - 2019.02期间在JD时关于paragraph generation的实验记录和心得体会。<br><a id="more"></a></p>
+<h1 id="table-of-contents">目录</h1><ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#实验记录"><span class="toc-text">实验记录</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#数据及处理"><span class="toc-text">数据及处理</span></a><ol class="toc-child"><li class="toc-item toc-level-5"><a class="toc-link" href="#Dataset"><span class="toc-text">Dataset</span></a></li><li class="toc-item toc-level-5"><a class="toc-link" href="#Data-Pre-processing"><span class="toc-text">Data Pre-processing</span></a></li><li class="toc-item toc-level-5"><a class="toc-link" href="#Feat-Extraction"><span class="toc-text">Feat Extraction</span></a></li></ol></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#模型及训练"><span class="toc-text">模型及训练</span></a><ol class="toc-child"><li class="toc-item toc-level-5"><a class="toc-link" href="#The-Proposed-CAE-LSTM"><span class="toc-text">The Proposed CAE-LSTM</span></a></li></ol></li></ol><li class="toc-item toc-level-1"><a class="toc-link" href="#心得体会"><span class="toc-text">心得体会</span></a></li>
+<h1 id="实验记录"><a href="#实验记录" class="headerlink" title="实验记录"></a>实验记录</h1><h3 id="数据及处理"><a href="#数据及处理" class="headerlink" title="数据及处理"></a>数据及处理</h3><blockquote>
+<p>主要涉及数据集，paragraph文本的处理和特征的提取。</p>
+</blockquote>
+<h5 id="Dataset"><a href="#Dataset" class="headerlink" title="Dataset"></a>Dataset</h5><ul>
+<li><p>Standford Paragraph Dataset</p>
+<p>Part of <a href="https://visualgenome.org" target="_blank" rel="noopener">Visual Genome</a> and annotated by <a href="https://cs.stanford.edu/people/ranjaykrishna/im2p/index.html" target="_blank" rel="noopener">Fei-Fei Li’s group</a>. The json file and the split files can be found at the aforementioned website. One can download the images according to the urls provided in the json file which looks like:</p>
+<p><code>[{&quot;url&quot;: &quot;https://cs.stanford.edu/people/rak248/VG_100K/2356347.jpg&quot;, &quot;image_id&quot;: 2356347, &quot;paragraph&quot;: &quot;A large building with bars on the windows in front of it. There is people walking in front of the building. There is a street in front of the building with many cars on it. &quot;}, …]</code></p>
+</li>
+<li><p>MS COCO</p>
+<p><a href="http://cocodataset.org" target="_blank" rel="noopener">MS COCO</a> is used for pre-training of all the models.</p>
+</li>
+</ul>
+<h5 id="Data-Pre-processing"><a href="#Data-Pre-processing" class="headerlink" title="Data Pre-processing"></a>Data Pre-processing</h5><ul>
+<li>Build ground truth (change gt into evaluation format)</li>
+<li>Build vocabulary (As we pretrain models with COCO data, the vocabulary is built with COCO training captions [all 11415 words,  omitting words &lt; 4]. The original version written by me is slow, referring to Ruotian Luo’s code would be better.)</li>
+<li>Build encode data (to save the image ids/image feat ids/encoded captions in to a json file for training)</li>
+</ul>
+<h5 id="Feat-Extraction"><a href="#Feat-Extraction" class="headerlink" title="Feat Extraction"></a>Feat Extraction</h5><p>Similar to the <a href="https://github.com/peteanderson80/bottom-up-attention" target="_blank" rel="noopener">Bottom-Up feature</a>, we use VGG-16 instead of Resnet. The network and the solver is provided at the  the Bottom-Up website, but some modifications are needed. The model is trained on Visual Genome with 90w iterations.</p>
+<p>Then we extract COCO feature and Stanford Paragraph feature with the saved model. Each feature has the size of [50, 4096], 50 means 50 regions, same as baselines.</p>
+<h3 id="模型及训练"><a href="#模型及训练" class="headerlink" title="模型及训练"></a>模型及训练</h3><h5 id="The-Proposed-CAE-LSTM"><a href="#The-Proposed-CAE-LSTM" class="headerlink" title="The Proposed CAE-LSTM"></a>The Proposed CAE-LSTM</h5><p>全称是Convolutional Auto-Encoding plus LSTM（姚老师起的）。</p>
+<h1 id="心得体会"><a href="#心得体会" class="headerlink" title="心得体会"></a>心得体会</h1><p>（To be continue）</p>
+
+            
+
+        </div>
+    </div>
+    <div id="post-footer" class="post-footer main-content-wrap">
+        
+            <div class="post-footer-tags">
+                <span class="text-color-light text-small">标签</span><br>
+                
+    <a class="tag tag--primary tag--small t-link" href="/tags/paragraph-generation/">paragraph generation</a> <a class="tag tag--primary tag--small t-link" href="/tags/research/">research</a> <a class="tag tag--primary tag--small t-link" href="/tags/vision-and-language/">vision and language</a>
+
+            </div>
+        
+        
+            <div class="post-actions-wrap">
+    <nav>
+        <ul class="post-actions post-action-nav">
+            <li class="post-action">
+                
+                    <a class="post-action-btn btn btn--disabled">
+                
+                    <i class="fa fa-angle-left" aria-hidden="true"></i>
+                    <span class="hide-xs hide-sm text-small icon-ml">上一篇</span>
+                </a>
+            </li>
+            <li class="post-action">
+                
+                    
+                    <a class="post-action-btn btn btn--default tooltip--top" href="/2019/01/16/2019-01-16-测试文章/" data-tooltip="2019-01-16-测试文章" aria-label="下一篇: 2019-01-16-测试文章">
+                
+                    <span class="hide-xs hide-sm text-small icon-mr">下一篇</span>
+                    <i class="fa fa-angle-right" aria-hidden="true"></i>
+                </a>
+            </li>
+        </ul>
+    </nav>
+    <ul class="post-actions post-action-share">
+        <li class="post-action hide-lg hide-md hide-sm">
+            <a class="post-action-btn btn btn--default btn-open-shareoptions" href="#btn-open-shareoptions" aria-label="Diesen Beitrag teilen">
+                <i class="fa fa-share-alt" aria-hidden="true"></i>
+            </a>
+        </li>
+        
+            
+            
+            <li class="post-action hide-xs">
+                <a class="post-action-btn btn btn--default" target="new" href="https://www.facebook.com/sharer/sharer.php?u=http://yoursite.com/2019/03/05/Paragraph-Generation/" title="分享到 Facebook">
+                    <i class="fab fa-facebook" aria-hidden="true"></i>
+                </a>
+            </li>
+        
+            
+            
+            <li class="post-action hide-xs">
+                <a class="post-action-btn btn btn--default" target="new" href="https://twitter.com/intent/tweet?text=http://yoursite.com/2019/03/05/Paragraph-Generation/" title="分享到 Twitter">
+                    <i class="fab fa-twitter" aria-hidden="true"></i>
+                </a>
+            </li>
+        
+            
+            
+            <li class="post-action hide-xs">
+                <a class="post-action-btn btn btn--default" target="new" href="https://plus.google.com/share?url=http://yoursite.com/2019/03/05/Paragraph-Generation/" title="分享到 Google+">
+                    <i class="fab fa-google-plus" aria-hidden="true"></i>
+                </a>
+            </li>
+        
+        
+            
+        
+        <li class="post-action">
+            
+                <a class="post-action-btn btn btn--default" href="#table-of-contents" aria-label="目录">
+            
+                <i class="fa fa-list" aria-hidden="true"></i>
+            </a>
+        </li>
+    </ul>
+</div>
+
+
+        
+        
+            
+        
+    </div>
+</article>
+
+
+
+                <footer id="footer" class="main-content-wrap">
+    <span class="copyrights">
+        Copyrights &copy; 2019 JQ. All Rights Reserved.
+    </span>
+</footer>
+
+            </div>
+            
+                <div id="bottom-bar" class="post-bottom-bar" data-behavior="4">
+                    <div class="post-actions-wrap">
+    <nav>
+        <ul class="post-actions post-action-nav">
+            <li class="post-action">
+                
+                    <a class="post-action-btn btn btn--disabled">
+                
+                    <i class="fa fa-angle-left" aria-hidden="true"></i>
+                    <span class="hide-xs hide-sm text-small icon-ml">上一篇</span>
+                </a>
+            </li>
+            <li class="post-action">
+                
+                    
+                    <a class="post-action-btn btn btn--default tooltip--top" href="/2019/01/16/2019-01-16-测试文章/" data-tooltip="2019-01-16-测试文章" aria-label="下一篇: 2019-01-16-测试文章">
+                
+                    <span class="hide-xs hide-sm text-small icon-mr">下一篇</span>
+                    <i class="fa fa-angle-right" aria-hidden="true"></i>
+                </a>
+            </li>
+        </ul>
+    </nav>
+    <ul class="post-actions post-action-share">
+        <li class="post-action hide-lg hide-md hide-sm">
+            <a class="post-action-btn btn btn--default btn-open-shareoptions" href="#btn-open-shareoptions" aria-label="Diesen Beitrag teilen">
+                <i class="fa fa-share-alt" aria-hidden="true"></i>
+            </a>
+        </li>
+        
+            
+            
+            <li class="post-action hide-xs">
+                <a class="post-action-btn btn btn--default" target="new" href="https://www.facebook.com/sharer/sharer.php?u=http://yoursite.com/2019/03/05/Paragraph-Generation/" title="分享到 Facebook">
+                    <i class="fab fa-facebook" aria-hidden="true"></i>
+                </a>
+            </li>
+        
+            
+            
+            <li class="post-action hide-xs">
+                <a class="post-action-btn btn btn--default" target="new" href="https://twitter.com/intent/tweet?text=http://yoursite.com/2019/03/05/Paragraph-Generation/" title="分享到 Twitter">
+                    <i class="fab fa-twitter" aria-hidden="true"></i>
+                </a>
+            </li>
+        
+            
+            
+            <li class="post-action hide-xs">
+                <a class="post-action-btn btn btn--default" target="new" href="https://plus.google.com/share?url=http://yoursite.com/2019/03/05/Paragraph-Generation/" title="分享到 Google+">
+                    <i class="fab fa-google-plus" aria-hidden="true"></i>
+                </a>
+            </li>
+        
+        
+            
+        
+        <li class="post-action">
+            
+                <a class="post-action-btn btn btn--default" href="#table-of-contents" aria-label="目录">
+            
+                <i class="fa fa-list" aria-hidden="true"></i>
+            </a>
+        </li>
+    </ul>
+</div>
+
+
+                </div>
+                <div id="share-options-bar" class="share-options-bar" data-behavior="4">
+    <i id="btn-close-shareoptions" class="fa fa-times"></i>
+    <ul class="share-options">
+        
+            
+            
+            <li class="share-option">
+                <a class="share-option-btn" target="new" href="https://www.facebook.com/sharer/sharer.php?u=http://yoursite.com/2019/03/05/Paragraph-Generation/">
+                    <i class="fab fa-facebook" aria-hidden="true"></i><span>分享到 Facebook</span>
+                </a>
+            </li>
+        
+            
+            
+            <li class="share-option">
+                <a class="share-option-btn" target="new" href="https://twitter.com/intent/tweet?text=http://yoursite.com/2019/03/05/Paragraph-Generation/">
+                    <i class="fab fa-twitter" aria-hidden="true"></i><span>分享到 Twitter</span>
+                </a>
+            </li>
+        
+            
+            
+            <li class="share-option">
+                <a class="share-option-btn" target="new" href="https://plus.google.com/share?url=http://yoursite.com/2019/03/05/Paragraph-Generation/">
+                    <i class="fab fa-google-plus" aria-hidden="true"></i><span>分享到 Google+</span>
+                </a>
+            </li>
+        
+    </ul>
+</div>
+
+            
+        </div>
+        
+
+
+    
+        
+    
+
+<div id="about">
+    <div id="about-card">
+        <div id="about-btn-close">
+            <i class="fa fa-times"></i>
+        </div>
+        
+            <img id="about-card-picture" src="/assets/images/IMG_0076.JPG" alt="作者的图片">
+        
+            <h4 id="about-card-name">JQ</h4>
+        
+            <div id="about-card-bio"><p>author.bio</p>
+</div>
+        
+        
+            <div id="about-card-job">
+                <i class="fa fa-briefcase"></i>
+                <br>
+                <p>author.job</p>
+
+            </div>
+        
+        
+    </div>
+</div>
+
+        
+        
+<div id="cover" style="background-image:url('/assets/images/cover.jpg');"></div>
+        <!--SCRIPTS-->
+<script src="/assets/js/script-vufjrm3fmbuttogo1hxuu0w9w0sesk5iyysjuguc2hdhufot9szxg8twijry.min.js"></script>
+<!--SCRIPTS END-->
+
+    
+
+
+
+    </body>
+</html>
