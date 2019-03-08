@@ -11,19 +11,23 @@
     
     
     
-    <script type="application/ld+json">{"@context":"http://schema.org","@type":"BlogPosting","author":{"@type":"Person","name":"JQ","sameAs":["https://github.com/","http://stackoverflow.com/users","https://twitter.com/","https://facebook.com/","https://plus.google.com/","https://www.linkedin.com/profile/","mailto"],"image":"IMG_0076.JPG"},"articleBody":"2018.08 - 2019.02期间在JD时关于paragraph generation的实验记录和心得体会。\n\n实验记录数据及处理\n主要涉及数据集，paragraph文本的处理和特征的提取。\n\nDataset\nStandford Paragraph Dataset\nPart of Visual Genome and annotated by Fei-Fei Li’s group. The json file and the split files can be found at the aforementioned website. One can download the images according to the urls provided in the json file which looks like:\n[{&quot;url&quot;: &quot;https://cs.stanford.edu/people/rak248/VG_100K/2356347.jpg&quot;, &quot;image_id&quot;: 2356347, &quot;paragraph&quot;: &quot;A large building with bars on the windows in front of it. There is people walking in front of the building. There is a street in front of the building with many cars on it. &quot;}, …]\n\nMS COCO\nMS COCO is used for pre-training of all the models.\n\n\nData Pre-processing\nBuild ground truth (change gt into evaluation format)\nBuild vocabulary (As we pretrain models with COCO data, the vocabulary is built with COCO training captions [all 11415 words,  omitting words &lt; 4]. The original version written by me is slow, referring to Ruotian Luo’s code would be better.)\nBuild encode data (to save the image ids/image feat ids/encoded captions in to a json file for training)\n\nFeat ExtractionSimilar to the Bottom-Up feature, we use VGG-16 instead of Resnet. The network and the solver is provided at the  the Bottom-Up website, but some modifications are needed. The model is trained on Visual Genome with 90w iterations.\nThen we extract COCO feature and Stanford Paragraph feature with the saved model. Each feature has the size of [50, 4096], 50 means 50 regions, same as baselines.\n模型及训练The Proposed CAE-LSTM全称是Convolutional Auto-Encoding plus LSTM（姚老师起的）。\n心得体会（To be continue）\n","dateCreated":"2019-03-05T20:22:40+08:00","dateModified":"2019-03-05T21:50:54+08:00","datePublished":"2019-03-05T20:22:40+08:00","description":"2018.08 - 2019.02期间在JD时关于paragraph generation的实验记录和心得体会。","headline":"Paragraph Generation","image":[],"mainEntityOfPage":{"@type":"WebPage","@id":"http://yoursite.com/2019/03/05/Paragraph-Generation/"},"publisher":{"@type":"Organization","name":"JQ","sameAs":["https://github.com/","http://stackoverflow.com/users","https://twitter.com/","https://facebook.com/","https://plus.google.com/","https://www.linkedin.com/profile/","mailto"],"image":"IMG_0076.JPG","logo":{"@type":"ImageObject","url":"IMG_0076.JPG"}},"url":"http://yoursite.com/2019/03/05/Paragraph-Generation/","keywords":"research, vision and language, paragraph generation"}</script>
-    <meta name="description" content="2018.08 - 2019.02期间在JD时关于paragraph generation的实验记录和心得体会。">
+    <script type="application/ld+json">{"@context":"http://schema.org","@type":"BlogPosting","author":{"@type":"Person","name":"JQ","sameAs":[],"image":"IMG_0076.JPG"},"articleBody":"2018.08 - 2019.02期间在JD时关于paragraph generation的实验记录和心得体会。\n\nParagraph generation：\n\n根据一幅图生成一段话\n\nground truth中句数不固定，实验时往往为了performance固定生成6句（由数据集决定）\n\n\n\n\n\n\n数据及处理\n主要涉及数据集，paragraph文本的处理和特征的提取。\n\nDataset\nStandford Paragraph Dataset\nPart of Visual Genome and annotated by Fei-Fei Li’s group. The json file and the split files can be found at the aforementioned website. One can download the images according to the urls provided in the json file which looks like:\n[{&quot;url&quot;: &quot;https://cs.stanford.edu/people/rak248/VG_100K/2356347.jpg&quot;, &quot;image_id&quot;: 2356347, &quot;paragraph&quot;: &quot;A large building with bars on the windows in front of it. There is people walking in front of the building. There is a street in front of the building with many cars on it. &quot;}, …].  \n\nMS COCO\nMS COCO is used for pre-training of all the models.\n\n\nData Pre-processing\nBuild ground truth\n(change gt into evaluation format)\n\nBuild vocabulary\n(As we pretrain models with COCO data, the vocabulary is built with COCO training captions [all 11415 words,  omitting words &lt; 4]. The original version written by me is slow, referring to Ruotian Luo’s code would be better.)\n\nBuild encode data\n(to save the image ids/image feat ids/encoded captions in to a json file for training)\n\n\nFeat ExtractionSimilar to the Bottom-Up feature, we use VGG-16 instead of Resnet. The network and the solver is provided at the  the Bottom-Up website, but some modifications are needed. The model is trained on Visual Genome with 90w iterations.\nThen we extract COCO feature and Stanford Paragraph feature with the saved model. Each feature has the size of [50, 4096], 50 means 50 regions, same as baselines.\n模型及训练The Proposed CAE-LSTM全称是Convolutional Auto-Encoding plus LSTM（姚老师起的）。\n\nCAE for Topic ModelingCAE用于从图像region feature中提取topic信息，topic数量和最大句子数量一致。以往的paper大多是用LSTM循环接收mean pooling feature，每个时刻的输出作为topic，如下图：\n\n在CAE中，topic vectors通过卷积生成，并通过反卷积重构出原来的feature。在本次的实现中，只用了一个卷积层，后加了Relu激活函数。\n\nTwo-level LSTM-based Paragraph Generator\nLSTM也就是decoder部分用的是Top-Down Attention。\n\n双层LSTM结构。\n\n第一层paragraph-level LSTM（P-LSTM），input是上一时刻sentence-level LSTM（S-LSTM）状态、mean-pooled region feature、词的embedding concat到一起，output是新的状态。\n\n计算attention，根据P-LSTM state、topic vector和region feature计算attention（MLP attention）。\n\n第二层sentence-level LSTM（S-LSTM），input是topic vector、P-LSTM输出的状态、attended feature concat到一起，output一方面是新的状态，另一方面去生成词。\n\n\n需要注意的是，paragraph state的传递于整个段落，而sentence state只在句内传递。也就是说S-LSTM每句开头都initialize为0，而P-LSTM只在段首initialize。\n\nSelf-critical Training with Coverage Reward\n用coverage reward来force model hit到更多的object。结合coverage reward和CIDEr值作为reinforcement learning的reward。\n\n\n具体实现\nCAE\nEncoding and decoding：\n123456789101112131415161718192021222324252627with tf.variable_scope(\"CNN\") as scope:    biasInit = None    weightInit = tf.constant_initializer(0.001, dtype=tf.float32)    X = tf.expand_dims(image_feat_emb, 3)        # from feature to topics    Xhat = layers.conv2d(X,                          num_outputs=6,                          kernel_size=self.kernel,                         stride = [1,2],                         weights_initializer = weightInit,                         biases_initializer=biasInit,                         activation_fn=tf.nn.relu,                         padding = 'VALID',                          reuse = None)        # back to feature    if self.W_rec &gt; 0:        X_rec = layers.conv2d_transpose(Xhat,                             num_outputs=1,                              kernel_size=self.kernel,                             stride = [1,2],                             biases_initializer=None,                             activation_fn=None,#tf.nn.relu,                             padding = 'VALID',                            reuse = None)    Xhat = tf.squeeze(Xhat)\n\nFrom feature to topics:\n\nregion feature原来的dim是[b，50, 4096] (VGG16 feature);\n\n过一层fc到[b，50, 1024] (为了节省显存)；\n\nexpand到[b，50，1024，1]；\n\nkernal size是[50，26]，stride是[1，2]，filter number/topic number为6；\n\n得到的topic matrix[b，1，500，6];\n\n\n\nBack:\n\nkernal size是[50，26]，stride是[1，2]，filter number为1；\n\n得到的feature matrix[b，50，1024，1]；\n\n\n\n\nReconstruction loss:\n12if self.W_rec &gt; 0:    loss += tf.losses.absolute_difference(X, X_rec, weights=self.W_rec)/self.batch_size\n也试过l2_loss，效果不如l1。W_rec这里用的是8.0。计算loss是就过一层fc之后的feature和重构的feature之间，不是最初的4096D的feature。\n\nLSTM\nattention部分：\n1234567h_att = tf.nn.tanh(image_feat_emb_1 + \\                   tf.expand_dims(tf.matmul(h_1, att_wh_1), 1) + \\                   tf.expand_dims(tf.matmul(Xhat[:,:,i], att_wh), 1))out_att = tf.reshape(tf.matmul(tf.reshape(h_att, [-1, 512]), att_w_1), \\          [-1, self.region_feat_num])beta = tf.nn.softmax(out_att)feat_att_1 = tf.reduce_sum(image_feat_emb * tf.expand_dims(beta, 2), 1)\n其他部分就不放了，LSTM常规操作。\n\nSelf-critical\n取字典中前1000个高频名词，用nltk判断词性：\n1234567891011121314151617from stemming.porter2 import stemimport nltklines = open(r'../coco_vocab.txt', 'r').readlines()word_list = []noun_id = 0for line in lines:    if len(word_list) &lt; 1000:        if not line == '\\n':            word = line.split('\\t')[0]            if word not in ['&lt;PAD&gt;', '&lt;S&gt;', '&lt;/S&gt;', '&lt;UNK&gt;'] and nltk.pos_tag([word])[0][1] == 'NN':                word_stem = stem(word)                if word_stem+'\\n' not in word_list:                    word_list.append(word_stem+'\\n')                    noun_id += 1    else:        break\n计算coverage reward：\n1234567891011121314151617def compute_coverage(self, batch_para, gt_noun_vector):    noun_vector = np.zeros((np.shape(batch_para)[0], 1000))    for idx, para in enumerate(batch_para):        for word_id in para:            if str(word_id) in self.word_id2noun_id.keys():                noun_id = self.word_id2noun_id[str(word_id)]                noun_vector[idx, noun_id] = 1    mul = np.multiply(noun_vector, gt_noun_vector)    gt_noun_sum = np.sum(gt_noun_vector, 1)    noun_sum = np.sum(noun_vector, 1)    reward = np.divide(np.sum(mul, 1), np.where(gt_noun_sum!=0, gt_noun_sum, 1))    noun_list = np.where(noun_vector[0]==1)[0]    gt_noun_list = np.where(gt_noun_vector[0]==1)[0]    return reward, noun_list, gt_noun_list\n简单说来就是生成句子中出现的gt中的obj/gt中的obj，这里的obj都是指top1k的。写的时候precision/recall/F1值都试过，F1会均衡一点，R会使句子变长。最后用的是R，然后用CIDEr来平衡。\n\n\n其他细节\nbatch size：32 （16好像也差不多，但大了会差些）\nLSTM hidden size：1000\nword emb size：1000\ndropout：0.5\nvocab size：11415 （COCO vocabulary）\nmax words：20（算上头尾）\nmax sentences：6\nimage feat dim：4096\nlearning rate：1e-4 for cross entropy，5e-6 for RL\npretrain epoches：20左右就可以。lr=1e-3，每3epoch降一次\nCross entropy loss training epoches：60左右。V100，占约16G显存。\nSelf-critical training epoches：看情况吧，不需要很久。P40，占约22G显存。\n\nDiscussionCAE\n关于结构设计\n\n当时也试过把层加深一点，或者加一个residual block，可惜效果不好。不知道是不是我实现的问题。\n除了从50个region卷到6个topic，也试过先mean pooling到一个vector，再反卷成6个topic（reconstruction是继续反卷成50个feature），效果也不错。用于不同的feature时表现不一致，用resnet feature就是后者要更好一点。\nKernel size最后用的是[50, 26]，但当时好像从6～196都试过，没有明显的差异，所以就选了26，那样得到的topic dim是500比较舒服。也试过不是在feature dim上卷，也就是第一维小于50，这样一是会涉及feature排序的问题，二是效果不好。\n\n\n关于feature排序\n实验用的是按class score排序的，不是按roi score排序的。后来试过把这个feature random以及用按roi score排序的。\n\n\n\n\n\nmetrics\nCIDEr\nMETEOR\nB4\nB1\n\n\n\n\nclass\n22.86\n18.35\n9.33\n41.55\n\n\nrandom\n23.08\n18.24\n9.28\n41.67\n\n\nroi\n22.30\n18.08\n8.84\n40.44\n\n\n\n\n关于效果\n重构是有一定效果的，但是不是非常的大。而且受feature的影响可能会有点不太稳定。\n\n\n\n\n\nmetrics\nCIDEr\nMETEOR\nB4\nB1\n\n\n\n\nno_rec\n22.13\n18.09\n9.14\n41.35\n\n\nrec\n22.86\n18.35\n9.33\n41.55\n\n\n\n\n关于细节\n本来conv和deconv都是有一个relu的，但后来yehao提示这样子，原feature不是非负，但重构的feature非负了，就不对了。\n把relu去掉，效果差不太多。也试过再加一层fc重构到最初的feature，效果不好。还试过最初feature emb的地方就加relu，效果也不好。这是后来论文提交以后的实验，都没有细调loss权重，可能有关。\n\n\n\nLSTM\n关于结构设计\n基本是参考bottom-up的结构，区别是第二个LSTM中输入了topic vector。本来想做成paragraph LSTM也只在句内传递状态，但是效果就是没有段落内传递效果好。\n\n关于细节\n\n实际实现中用的是固定把第20时刻的P-LSTM状态作为下一句的初始，理论上这样是没道理的，但是也试过传递结束符之后的状态，但结果就是不好。\n算attention时加不加topic vector好像区别不大。\n\n\n\nSelf-critical Training\n关于reward设计\n想到coverage的原因纯粹是因为METEOR结果不够高，想弥补一下。纯用coverage句子会越来越长，句子长了之后METEOR结果自然就高了。但是久了必然会崩掉，所以加了CIDEr。\n\n关于细节\n\n用CIDEr的时候不能一边用teacher forcing（之前训练discriminator时一边tearcher forcing为了让model参数不变太多），会影响效果。\n不行的时候可以再把learning rate调小一点，有的数据集就是要小一点的。\n\n\n关于效果\n用CIDEr会让CIDEr和Bleu变得很高，但是METEOR涨的不多，甚至后面会降。所以要加coverage一起提供reward。但光用这俩METEOR还是会差一点，于是后面迫不得已限制生成相同trigram的概率，见下面第二点。\n\n\nImportant points\n对feature用了batch norm，在最初对feature做处理的时候。在这套code里面好像很重要。\n\n生成的时候降低生成同样三元组的概率。试过直接将概率降为0以及降低概率，降低的效果更好一些。因为tf不能直接改tensor值，只能借beam search的代码写。\n123456789101112131415161718192021222324252627282930313233if trigram_force and j &gt;= 3:    if constraint_type == 'reduce_prob':        prev_two = (sentence[-3], sentence[-2])        current = sentence[-1]        if prev_two in trigrams:            trigrams[prev_two].append(current)        else:            trigrams[prev_two] = [current]        mask = np.zeros_like(word_probabilities)        prev_two = (sentence[-2], sentence[-1])        if prev_two in trigrams:            for wo in trigrams[prev_two]:                mask[wo] += 1        word_probabilities -= alpha*mask#(alpha*0.693)*mask    elif constraint_type == 'set_zero_prob':        prev_two = (sentence[-3], sentence[-2])        current = sentence[-1]        if prev_two in trigrams:            trigrams[prev_two].append(current)        else:            trigrams[prev_two] = [current]        prev_two = (sentence[-2], sentence[-1])        if prev_two in trigrams:            for wo in trigrams[prev_two]:                word_probabilities[wo] = math.log(1e-12)    else:        print ('Trigram Contraint Type Error!')\n\ntesting的ground truth切成6句再做evaluation，虽然baseline paper里没写，但他们都是这么做的。（邮件问到的）\n\n生成时没有判断生成几句，直接用了6句，因为砍短会降低METEOR的performance。\n\n\n后记写到这里大大小小就差不多了，后面还会再写一篇整个过程中曾经出现的思路和做过的尝试。\n感谢大师兄和pandy的全程指导，和男朋友一路的支持。\n2019年3月8日\n（END）\n","dateCreated":"2019-03-05T20:22:40+08:00","dateModified":"2019-03-08T20:54:47+08:00","datePublished":"2019-03-05T20:22:40+08:00","description":"2018.08 - 2019.02期间在JD时关于paragraph generation的实验记录和心得体会。\n\nParagraph generation：\n\n根据一幅图生成一段话\n\nground truth中句数不固定，实验时往往为了performance固定生成6句（由数据集决定）\n\n\n\n","headline":"Paragraph Generation","image":[],"mainEntityOfPage":{"@type":"WebPage","@id":"http://yoursite.com/2019/03/05/Paragraph-Generation/"},"publisher":{"@type":"Organization","name":"JQ","sameAs":[],"image":"IMG_0076.JPG","logo":{"@type":"ImageObject","url":"IMG_0076.JPG"}},"url":"http://yoursite.com/2019/03/05/Paragraph-Generation/","keywords":"research, vision and language, paragraph generation"}</script>
+    <meta name="description" content="2018.08 - 2019.02期间在JD时关于paragraph generation的实验记录和心得体会。  Paragraph generation：  根据一幅图生成一段话  ground truth中句数不固定，实验时往往为了performance固定生成6句（由数据集决定）">
 <meta name="keywords" content="research,vision and language,paragraph generation">
 <meta property="og:type" content="blog">
 <meta property="og:title" content="Paragraph Generation">
 <meta property="og:url" content="http://yoursite.com/2019/03/05/Paragraph-Generation/index.html">
 <meta property="og:site_name" content="JQ">
-<meta property="og:description" content="2018.08 - 2019.02期间在JD时关于paragraph generation的实验记录和心得体会。">
+<meta property="og:description" content="2018.08 - 2019.02期间在JD时关于paragraph generation的实验记录和心得体会。  Paragraph generation：  根据一幅图生成一段话  ground truth中句数不固定，实验时往往为了performance固定生成6句（由数据集决定）">
 <meta property="og:locale" content="zh-cn">
-<meta property="og:updated_time" content="2019-03-05T13:50:54.630Z">
+<meta property="og:image" content="http://yoursite.com/2019/03/05/Paragraph-Generation/main.jpg">
+<meta property="og:image" content="http://yoursite.com/2019/03/05/Paragraph-Generation/1.jpg">
+<meta property="og:image" content="http://yoursite.com/2019/03/05/Paragraph-Generation/decoder.JPG">
+<meta property="og:updated_time" content="2019-03-08T12:54:47.065Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="Paragraph Generation">
-<meta name="twitter:description" content="2018.08 - 2019.02期间在JD时关于paragraph generation的实验记录和心得体会。">
+<meta name="twitter:description" content="2018.08 - 2019.02期间在JD时关于paragraph generation的实验记录和心得体会。  Paragraph generation：  根据一幅图生成一段话  ground truth中句数不固定，实验时往往为了performance固定生成6句（由数据集决定）">
+<meta name="twitter:image" content="http://yoursite.com/2019/03/05/Paragraph-Generation/main.jpg">
     
     
         
@@ -149,86 +153,6 @@
             
         </ul>
         
-            <ul class="sidebar-buttons">
-            
-                <li class="sidebar-button">
-                    
-                        <a class="sidebar-button-link " href="https://github.com/" target="_blank" rel="noopener" title="GitHub">
-                    
-                        <i class="sidebar-button-icon fab fa-github" aria-hidden="true"></i>
-                        <span class="sidebar-button-desc">GitHub</span>
-                    </a>
-            </li>
-            
-                <li class="sidebar-button">
-                    
-                        <a class="sidebar-button-link " href="http://stackoverflow.com/users" target="_blank" rel="noopener" title="Stack Overflow">
-                    
-                        <i class="sidebar-button-icon fab fa-stack-overflow" aria-hidden="true"></i>
-                        <span class="sidebar-button-desc">Stack Overflow</span>
-                    </a>
-            </li>
-            
-                <li class="sidebar-button">
-                    
-                        <a class="sidebar-button-link " href="https://twitter.com/" target="_blank" rel="noopener" title="Twitter">
-                    
-                        <i class="sidebar-button-icon fab fa-twitter" aria-hidden="true"></i>
-                        <span class="sidebar-button-desc">Twitter</span>
-                    </a>
-            </li>
-            
-                <li class="sidebar-button">
-                    
-                        <a class="sidebar-button-link " href="https://facebook.com/" target="_blank" rel="noopener" title="Facebook">
-                    
-                        <i class="sidebar-button-icon fab fa-facebook" aria-hidden="true"></i>
-                        <span class="sidebar-button-desc">Facebook</span>
-                    </a>
-            </li>
-            
-                <li class="sidebar-button">
-                    
-                        <a class="sidebar-button-link " href="https://plus.google.com/" target="_blank" rel="noopener" title="Google Plus">
-                    
-                        <i class="sidebar-button-icon fab fa-google-plus" aria-hidden="true"></i>
-                        <span class="sidebar-button-desc">Google Plus</span>
-                    </a>
-            </li>
-            
-                <li class="sidebar-button">
-                    
-                        <a class="sidebar-button-link " href="https://www.linkedin.com/profile/" target="_blank" rel="noopener" title="LinkedIn">
-                    
-                        <i class="sidebar-button-icon fab fa-linkedin" aria-hidden="true"></i>
-                        <span class="sidebar-button-desc">LinkedIn</span>
-                    </a>
-            </li>
-            
-                <li class="sidebar-button">
-                    
-                        <a class="sidebar-button-link " href="/mailto" title="邮箱">
-                    
-                        <i class="sidebar-button-icon fa fa-envelope" aria-hidden="true"></i>
-                        <span class="sidebar-button-desc">邮箱</span>
-                    </a>
-            </li>
-            
-        </ul>
-        
-            <ul class="sidebar-buttons">
-            
-                <li class="sidebar-button">
-                    
-                        <a class="sidebar-button-link " href="/atom.xml" title="RSS">
-                    
-                        <i class="sidebar-button-icon fa fa-rss" aria-hidden="true"></i>
-                        <span class="sidebar-button-desc">RSS</span>
-                    </a>
-            </li>
-            
-        </ul>
-        
     </div>
 </nav>
 
@@ -255,6 +179,12 @@
     	
     </time>
     
+        <span>发布在 </span>
+        
+    <a class="category-link" href="/categories/my-research/">my research</a>
+
+
+    
 </div>
 
     
@@ -263,29 +193,252 @@
     
     <div class="post-content markdown">
         <div class="main-content-wrap">
-            <p>2018.08 - 2019.02期间在JD时关于paragraph generation的实验记录和心得体会。<br><a id="more"></a></p>
-<h1 id="table-of-contents">目录</h1><ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#实验记录"><span class="toc-text">实验记录</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#数据及处理"><span class="toc-text">数据及处理</span></a><ol class="toc-child"><li class="toc-item toc-level-5"><a class="toc-link" href="#Dataset"><span class="toc-text">Dataset</span></a></li><li class="toc-item toc-level-5"><a class="toc-link" href="#Data-Pre-processing"><span class="toc-text">Data Pre-processing</span></a></li><li class="toc-item toc-level-5"><a class="toc-link" href="#Feat-Extraction"><span class="toc-text">Feat Extraction</span></a></li></ol></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#模型及训练"><span class="toc-text">模型及训练</span></a><ol class="toc-child"><li class="toc-item toc-level-5"><a class="toc-link" href="#The-Proposed-CAE-LSTM"><span class="toc-text">The Proposed CAE-LSTM</span></a></li></ol></li></ol><li class="toc-item toc-level-1"><a class="toc-link" href="#心得体会"><span class="toc-text">心得体会</span></a></li>
-<h1 id="实验记录"><a href="#实验记录" class="headerlink" title="实验记录"></a>实验记录</h1><h3 id="数据及处理"><a href="#数据及处理" class="headerlink" title="数据及处理"></a>数据及处理</h3><blockquote>
+            <p>2018.08 - 2019.02期间在JD时关于paragraph generation的实验记录和心得体会。</p>
+<blockquote>
+<p>Paragraph generation：</p>
+<ul>
+<li><p>根据一幅图生成一段话</p>
+</li>
+<li><p>ground truth中句数不固定，实验时往往为了performance固定生成6句（由数据集决定）</p>
+</li>
+</ul>
+</blockquote>
+<img src="/2019/03/05/Paragraph-Generation/main.jpg" title="The proposed framework.">
+<a id="more"></a>
+<h1 id="table-of-contents">目录</h1><ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#数据及处理"><span class="toc-text">数据及处理</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#Dataset"><span class="toc-text">Dataset</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#Data-Pre-processing"><span class="toc-text">Data Pre-processing</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#Feat-Extraction"><span class="toc-text">Feat Extraction</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#模型及训练"><span class="toc-text">模型及训练</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#The-Proposed-CAE-LSTM"><span class="toc-text">The Proposed CAE-LSTM</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#具体实现"><span class="toc-text">具体实现</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#其他细节"><span class="toc-text">其他细节</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Discussion"><span class="toc-text">Discussion</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#CAE"><span class="toc-text">CAE</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#LSTM"><span class="toc-text">LSTM</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#Self-critical-Training"><span class="toc-text">Self-critical Training</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#Important-points"><span class="toc-text">Important points</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#后记"><span class="toc-text">后记</span></a></li></ol>
+<h2 id="数据及处理"><a href="#数据及处理" class="headerlink" title="数据及处理"></a>数据及处理</h2><blockquote>
 <p>主要涉及数据集，paragraph文本的处理和特征的提取。</p>
 </blockquote>
-<h5 id="Dataset"><a href="#Dataset" class="headerlink" title="Dataset"></a>Dataset</h5><ul>
-<li><p>Standford Paragraph Dataset</p>
+<h3 id="Dataset"><a href="#Dataset" class="headerlink" title="Dataset"></a>Dataset</h3><ul>
+<li><p><em>Standford Paragraph Dataset</em></p>
 <p>Part of <a href="https://visualgenome.org" target="_blank" rel="noopener">Visual Genome</a> and annotated by <a href="https://cs.stanford.edu/people/ranjaykrishna/im2p/index.html" target="_blank" rel="noopener">Fei-Fei Li’s group</a>. The json file and the split files can be found at the aforementioned website. One can download the images according to the urls provided in the json file which looks like:</p>
-<p><code>[{&quot;url&quot;: &quot;https://cs.stanford.edu/people/rak248/VG_100K/2356347.jpg&quot;, &quot;image_id&quot;: 2356347, &quot;paragraph&quot;: &quot;A large building with bars on the windows in front of it. There is people walking in front of the building. There is a street in front of the building with many cars on it. &quot;}, …]</code></p>
+<p><code>[{&quot;url&quot;: &quot;https://cs.stanford.edu/people/rak248/VG_100K/2356347.jpg&quot;, &quot;image_id&quot;: 2356347, &quot;paragraph&quot;: &quot;A large building with bars on the windows in front of it. There is people walking in front of the building. There is a street in front of the building with many cars on it. &quot;}, …].</code>  </p>
 </li>
-<li><p>MS COCO</p>
+<li><p><em>MS COCO</em></p>
 <p><a href="http://cocodataset.org" target="_blank" rel="noopener">MS COCO</a> is used for pre-training of all the models.</p>
 </li>
 </ul>
-<h5 id="Data-Pre-processing"><a href="#Data-Pre-processing" class="headerlink" title="Data Pre-processing"></a>Data Pre-processing</h5><ul>
-<li>Build ground truth (change gt into evaluation format)</li>
-<li>Build vocabulary (As we pretrain models with COCO data, the vocabulary is built with COCO training captions [all 11415 words,  omitting words &lt; 4]. The original version written by me is slow, referring to Ruotian Luo’s code would be better.)</li>
-<li>Build encode data (to save the image ids/image feat ids/encoded captions in to a json file for training)</li>
+<h3 id="Data-Pre-processing"><a href="#Data-Pre-processing" class="headerlink" title="Data Pre-processing"></a>Data Pre-processing</h3><ul>
+<li><p><em>Build ground truth</em></p>
+<p>(change gt into evaluation format)</p>
+</li>
+<li><p><em>Build vocabulary</em></p>
+<p>(As we pretrain models with COCO data, the vocabulary is built with COCO training captions [all 11415 words,  omitting words &lt; 4]. The original version written by me is slow, referring to Ruotian Luo’s code would be better.)</p>
+</li>
+<li><p><em>Build encode data</em></p>
+<p>(to save the image ids/image feat ids/encoded captions in to a json file for training)</p>
+</li>
 </ul>
-<h5 id="Feat-Extraction"><a href="#Feat-Extraction" class="headerlink" title="Feat Extraction"></a>Feat Extraction</h5><p>Similar to the <a href="https://github.com/peteanderson80/bottom-up-attention" target="_blank" rel="noopener">Bottom-Up feature</a>, we use VGG-16 instead of Resnet. The network and the solver is provided at the  the Bottom-Up website, but some modifications are needed. The model is trained on Visual Genome with 90w iterations.</p>
+<h3 id="Feat-Extraction"><a href="#Feat-Extraction" class="headerlink" title="Feat Extraction"></a>Feat Extraction</h3><p>Similar to the <a href="https://github.com/peteanderson80/bottom-up-attention" target="_blank" rel="noopener">Bottom-Up feature</a>, we use VGG-16 instead of Resnet. The network and the solver is provided at the  the Bottom-Up website, but some modifications are needed. The model is trained on Visual Genome with 90w iterations.</p>
 <p>Then we extract COCO feature and Stanford Paragraph feature with the saved model. Each feature has the size of [50, 4096], 50 means 50 regions, same as baselines.</p>
-<h3 id="模型及训练"><a href="#模型及训练" class="headerlink" title="模型及训练"></a>模型及训练</h3><h5 id="The-Proposed-CAE-LSTM"><a href="#The-Proposed-CAE-LSTM" class="headerlink" title="The Proposed CAE-LSTM"></a>The Proposed CAE-LSTM</h5><p>全称是Convolutional Auto-Encoding plus LSTM（姚老师起的）。</p>
-<h1 id="心得体会"><a href="#心得体会" class="headerlink" title="心得体会"></a>心得体会</h1><p>（To be continue）</p>
+<h2 id="模型及训练"><a href="#模型及训练" class="headerlink" title="模型及训练"></a>模型及训练</h2><h3 id="The-Proposed-CAE-LSTM"><a href="#The-Proposed-CAE-LSTM" class="headerlink" title="The Proposed CAE-LSTM"></a>The Proposed CAE-LSTM</h3><p><code>全称是Convolutional Auto-Encoding plus LSTM（姚老师起的）。</code></p>
+<ul>
+<li><p><strong>CAE for Topic Modeling</strong><br>CAE用于从图像region feature中提取topic信息，topic数量和最大句子数量一致。以往的paper大多是用LSTM循环接收mean pooling feature，每个时刻的输出作为topic，如下图：</p>
+<p><div style="width:500px; margin: auto"><img src="1.jpg" alt=""></div></p>
+<p>在CAE中，topic vectors通过卷积生成，并通过反卷积重构出原来的feature。在本次的实现中，只用了一个卷积层，后加了Relu激活函数。</p>
+</li>
+<li><p><strong>Two-level LSTM-based Paragraph Generator</strong></p>
+<p>LSTM也就是decoder部分用的是<a href="https://github.com/peteanderson80/Up-Down-Captioner" target="_blank" rel="noopener">Top-Down Attention</a>。</p>
+<p><div style="width:500px; margin: auto"><img src="decoder.JPG" alt=""></div></p>
+<p>双层LSTM结构。</p>
+<ul>
+<li><p><strong>第一层paragraph-level LSTM（P-LSTM）</strong>，input是上一时刻sentence-level LSTM（S-LSTM）状态、mean-pooled region feature、词的embedding concat到一起，output是新的状态。</p>
+</li>
+<li><p><strong>计算attention</strong>，根据P-LSTM state、topic vector和region feature计算attention（MLP attention）。</p>
+</li>
+<li><p><strong>第二层sentence-level LSTM（S-LSTM）</strong>，input是topic vector、P-LSTM输出的状态、attended feature concat到一起，output一方面是新的状态，另一方面去生成词。</p>
+</li>
+</ul>
+<p>需要注意的是，paragraph state的传递于整个段落，而sentence state只在句内传递。也就是说S-LSTM每句开头都initialize为0，而P-LSTM只在段首initialize。</p>
+</li>
+<li><p><strong>Self-critical Training with Coverage Reward</strong></p>
+<p>用coverage reward来force model hit到更多的object。结合coverage reward和CIDEr值作为reinforcement learning的reward。</p>
+</li>
+</ul>
+<h3 id="具体实现"><a href="#具体实现" class="headerlink" title="具体实现"></a>具体实现</h3><ul>
+<li><p><strong>CAE</strong></p>
+<p><strong>Encoding and decoding：</strong></p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">with</span> tf.variable_scope(<span class="string">"CNN"</span>) <span class="keyword">as</span> scope:</span><br><span class="line">    biasInit = <span class="keyword">None</span></span><br><span class="line">    weightInit = tf.constant_initializer(<span class="number">0.001</span>, dtype=tf.float32)</span><br><span class="line">    X = tf.expand_dims(image_feat_emb, <span class="number">3</span>)</span><br><span class="line">    </span><br><span class="line">    <span class="comment"># from feature to topics</span></span><br><span class="line">    Xhat = layers.conv2d(X,  </span><br><span class="line">                        num_outputs=<span class="number">6</span>,  </span><br><span class="line">                        kernel_size=self.kernel, </span><br><span class="line">                        stride = [<span class="number">1</span>,<span class="number">2</span>], </span><br><span class="line">                        weights_initializer = weightInit, </span><br><span class="line">                        biases_initializer=biasInit, </span><br><span class="line">                        activation_fn=tf.nn.relu, </span><br><span class="line">                        padding = <span class="string">'VALID'</span>,  </span><br><span class="line">                        reuse = <span class="keyword">None</span>)</span><br><span class="line">    </span><br><span class="line">    <span class="comment"># back to feature</span></span><br><span class="line">    <span class="keyword">if</span> self.W_rec &gt; <span class="number">0</span>:</span><br><span class="line">        X_rec = layers.conv2d_transpose(Xhat, </span><br><span class="line">                            num_outputs=<span class="number">1</span>,  </span><br><span class="line">                            kernel_size=self.kernel, </span><br><span class="line">                            stride = [<span class="number">1</span>,<span class="number">2</span>], </span><br><span class="line">                            biases_initializer=<span class="keyword">None</span>, </span><br><span class="line">                            activation_fn=<span class="keyword">None</span>,<span class="comment">#tf.nn.relu, </span></span><br><span class="line">                            padding = <span class="string">'VALID'</span>,</span><br><span class="line">                            reuse = <span class="keyword">None</span>)</span><br><span class="line">    Xhat = tf.squeeze(Xhat)</span><br></pre></td></tr></table></figure>
+<ul>
+<li><p>From feature to topics:</p>
+<ul>
+<li><p>region feature原来的dim是[b，50, 4096] (VGG16 feature);</p>
+</li>
+<li><p>过一层fc到[b，50, 1024] (为了节省显存)；</p>
+</li>
+<li><p>expand到[b，50，1024，1]；</p>
+</li>
+<li><p>kernal size是[50，26]，stride是[1，2]，filter number/topic number为6；</p>
+</li>
+<li><p>得到的topic matrix[b，1，500，6];</p>
+</li>
+</ul>
+</li>
+<li><p>Back:</p>
+<ul>
+<li><p>kernal size是[50，26]，stride是[1，2]，filter number为1；</p>
+</li>
+<li><p>得到的feature matrix[b，50，1024，1]；</p>
+</li>
+</ul>
+</li>
+</ul>
+<p><strong>Reconstruction loss:</strong></p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">if</span> self.W_rec &gt; <span class="number">0</span>:</span><br><span class="line">    loss += tf.losses.absolute_difference(X, X_rec, weights=self.W_rec)/self.batch_size</span><br></pre></td></tr></table></figure>
+<p>也试过l2_loss，效果不如l1。W_rec这里用的是8.0。计算loss是就过一层fc之后的feature和重构的feature之间，不是最初的4096D的feature。</p>
+</li>
+<li><p><strong>LSTM</strong></p>
+<p>attention部分：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">h_att = tf.nn.tanh(image_feat_emb_1 + \</span><br><span class="line">                   tf.expand_dims(tf.matmul(h_1, att_wh_1), <span class="number">1</span>) + \</span><br><span class="line">                   tf.expand_dims(tf.matmul(Xhat[:,:,i], att_wh), <span class="number">1</span>))</span><br><span class="line">out_att = tf.reshape(tf.matmul(tf.reshape(h_att, [<span class="number">-1</span>, <span class="number">512</span>]), att_w_1), \</span><br><span class="line">          [<span class="number">-1</span>, self.region_feat_num])</span><br><span class="line">beta = tf.nn.softmax(out_att)</span><br><span class="line">feat_att_1 = tf.reduce_sum(image_feat_emb * tf.expand_dims(beta, <span class="number">2</span>), <span class="number">1</span>)</span><br></pre></td></tr></table></figure>
+<p>其他部分就不放了，LSTM常规操作。</p>
+</li>
+<li><p><strong>Self-critical</strong></p>
+<p>取字典中前1000个高频名词，用nltk判断词性：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">from</span> stemming.porter2 <span class="keyword">import</span> stem</span><br><span class="line"><span class="keyword">import</span> nltk</span><br><span class="line"></span><br><span class="line">lines = open(<span class="string">r'../coco_vocab.txt'</span>, <span class="string">'r'</span>).readlines()</span><br><span class="line">word_list = []</span><br><span class="line">noun_id = <span class="number">0</span></span><br><span class="line"><span class="keyword">for</span> line <span class="keyword">in</span> lines:</span><br><span class="line">    <span class="keyword">if</span> len(word_list) &lt; <span class="number">1000</span>:</span><br><span class="line">        <span class="keyword">if</span> <span class="keyword">not</span> line == <span class="string">'\n'</span>:</span><br><span class="line">            word = line.split(<span class="string">'\t'</span>)[<span class="number">0</span>]</span><br><span class="line">            <span class="keyword">if</span> word <span class="keyword">not</span> <span class="keyword">in</span> [<span class="string">'&lt;PAD&gt;'</span>, <span class="string">'&lt;S&gt;'</span>, <span class="string">'&lt;/S&gt;'</span>, <span class="string">'&lt;UNK&gt;'</span>] <span class="keyword">and</span> nltk.pos_tag([word])[<span class="number">0</span>][<span class="number">1</span>] == <span class="string">'NN'</span>:</span><br><span class="line">                word_stem = stem(word)</span><br><span class="line">                <span class="keyword">if</span> word_stem+<span class="string">'\n'</span> <span class="keyword">not</span> <span class="keyword">in</span> word_list:</span><br><span class="line">                    word_list.append(word_stem+<span class="string">'\n'</span>)</span><br><span class="line">                    noun_id += <span class="number">1</span></span><br><span class="line">    <span class="keyword">else</span>:</span><br><span class="line">        <span class="keyword">break</span></span><br></pre></td></tr></table></figure>
+<p>计算coverage reward：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">def</span> <span class="title">compute_coverage</span><span class="params">(self, batch_para, gt_noun_vector)</span>:</span></span><br><span class="line">    noun_vector = np.zeros((np.shape(batch_para)[<span class="number">0</span>], <span class="number">1000</span>))</span><br><span class="line">    <span class="keyword">for</span> idx, para <span class="keyword">in</span> enumerate(batch_para):</span><br><span class="line">        <span class="keyword">for</span> word_id <span class="keyword">in</span> para:</span><br><span class="line">            <span class="keyword">if</span> str(word_id) <span class="keyword">in</span> self.word_id2noun_id.keys():</span><br><span class="line">                noun_id = self.word_id2noun_id[str(word_id)]</span><br><span class="line">                noun_vector[idx, noun_id] = <span class="number">1</span></span><br><span class="line">    mul = np.multiply(noun_vector, gt_noun_vector)</span><br><span class="line"></span><br><span class="line">    gt_noun_sum = np.sum(gt_noun_vector, <span class="number">1</span>)</span><br><span class="line">    noun_sum = np.sum(noun_vector, <span class="number">1</span>)</span><br><span class="line">    reward = np.divide(np.sum(mul, <span class="number">1</span>), np.where(gt_noun_sum!=<span class="number">0</span>, gt_noun_sum, <span class="number">1</span>))</span><br><span class="line"></span><br><span class="line">    noun_list = np.where(noun_vector[<span class="number">0</span>]==<span class="number">1</span>)[<span class="number">0</span>]</span><br><span class="line">    gt_noun_list = np.where(gt_noun_vector[<span class="number">0</span>]==<span class="number">1</span>)[<span class="number">0</span>]</span><br><span class="line"></span><br><span class="line">    <span class="keyword">return</span> reward, noun_list, gt_noun_list</span><br></pre></td></tr></table></figure>
+<p>简单说来就是生成句子中出现的gt中的obj/gt中的obj，这里的obj都是指top1k的。写的时候precision/recall/F1值都试过，F1会均衡一点，R会使句子变长。最后用的是R，然后用CIDEr来平衡。</p>
+</li>
+</ul>
+<h3 id="其他细节"><a href="#其他细节" class="headerlink" title="其他细节"></a>其他细节</h3><ul>
+<li>batch size：32 （16好像也差不多，但大了会差些）</li>
+<li>LSTM hidden size：1000</li>
+<li>word emb size：1000</li>
+<li>dropout：0.5</li>
+<li>vocab size：11415 （COCO vocabulary）</li>
+<li>max words：20（算上头尾）</li>
+<li>max sentences：6</li>
+<li>image feat dim：4096</li>
+<li>learning rate：1e-4 for cross entropy，5e-6 for RL</li>
+<li>pretrain epoches：20左右就可以。lr=1e-3，每3epoch降一次</li>
+<li>Cross entropy loss training epoches：60左右。V100，占约16G显存。</li>
+<li>Self-critical training epoches：看情况吧，不需要很久。P40，占约22G显存。</li>
+</ul>
+<h2 id="Discussion"><a href="#Discussion" class="headerlink" title="Discussion"></a>Discussion</h2><h3 id="CAE"><a href="#CAE" class="headerlink" title="CAE"></a>CAE</h3><ul>
+<li><p><strong>关于结构设计</strong></p>
+<ul>
+<li>当时也试过把层加深一点，或者加一个residual block，可惜效果不好。不知道是不是我实现的问题。</li>
+<li>除了从50个region卷到6个topic，也试过先mean pooling到一个vector，再反卷成6个topic（reconstruction是继续反卷成50个feature），效果也不错。用于不同的feature时表现不一致，用resnet feature就是后者要更好一点。</li>
+<li>Kernel size最后用的是[50, 26]，但当时好像从6～196都试过，没有明显的差异，所以就选了26，那样得到的topic dim是500比较舒服。也试过不是在feature dim上卷，也就是第一维小于50，这样一是会涉及feature排序的问题，二是效果不好。</li>
+</ul>
+</li>
+<li><p><strong>关于feature排序</strong></p>
+<p>实验用的是按class score排序的，不是按roi score排序的。后来试过把这个feature random以及用按roi score排序的。</p>
+</li>
+</ul>
+<table>
+<thead>
+<tr>
+<th>metrics</th>
+<th>CIDEr</th>
+<th>METEOR</th>
+<th>B4</th>
+<th>B1</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>class</td>
+<td>22.86</td>
+<td>18.35</td>
+<td>9.33</td>
+<td>41.55</td>
+</tr>
+<tr>
+<td>random</td>
+<td>23.08</td>
+<td>18.24</td>
+<td>9.28</td>
+<td>41.67</td>
+</tr>
+<tr>
+<td>roi</td>
+<td>22.30</td>
+<td>18.08</td>
+<td>8.84</td>
+<td>40.44</td>
+</tr>
+</tbody>
+</table>
+<ul>
+<li><p><strong>关于效果</strong></p>
+<p>重构是有一定效果的，但是不是非常的大。而且受feature的影响可能会有点不太稳定。</p>
+</li>
+</ul>
+<table>
+<thead>
+<tr>
+<th>metrics</th>
+<th>CIDEr</th>
+<th>METEOR</th>
+<th>B4</th>
+<th>B1</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>no_rec</td>
+<td>22.13</td>
+<td>18.09</td>
+<td>9.14</td>
+<td>41.35</td>
+</tr>
+<tr>
+<td>rec</td>
+<td>22.86</td>
+<td>18.35</td>
+<td>9.33</td>
+<td>41.55</td>
+</tr>
+</tbody>
+</table>
+<ul>
+<li><strong>关于细节</strong><ul>
+<li>本来conv和deconv都是有一个relu的，但后来yehao提示这样子，原feature不是非负，但重构的feature非负了，就不对了。</li>
+<li>把relu去掉，效果差不太多。也试过再加一层fc重构到最初的feature，效果不好。还试过最初feature emb的地方就加relu，效果也不好。这是后来论文提交以后的实验，都没有细调loss权重，可能有关。</li>
+</ul>
+</li>
+</ul>
+<h3 id="LSTM"><a href="#LSTM" class="headerlink" title="LSTM"></a>LSTM</h3><ul>
+<li><p><strong>关于结构设计</strong></p>
+<p>基本是参考bottom-up的结构，区别是第二个LSTM中输入了topic vector。本来想做成paragraph LSTM也只在句内传递状态，但是效果就是没有段落内传递效果好。</p>
+</li>
+<li><p><strong>关于细节</strong></p>
+<ul>
+<li>实际实现中用的是固定把第20时刻的P-LSTM状态作为下一句的初始，理论上这样是没道理的，但是也试过传递结束符之后的状态，但结果就是不好。</li>
+<li>算attention时加不加topic vector好像区别不大。</li>
+</ul>
+</li>
+</ul>
+<h3 id="Self-critical-Training"><a href="#Self-critical-Training" class="headerlink" title="Self-critical Training"></a>Self-critical Training</h3><ul>
+<li><p>关于reward设计</p>
+<p>想到coverage的原因纯粹是因为METEOR结果不够高，想弥补一下。纯用coverage句子会越来越长，句子长了之后METEOR结果自然就高了。但是久了必然会崩掉，所以加了CIDEr。</p>
+</li>
+<li><p>关于细节</p>
+<ul>
+<li>用CIDEr的时候不能一边用teacher forcing（之前训练discriminator时一边tearcher forcing为了让model参数不变太多），会影响效果。</li>
+<li>不行的时候可以再把learning rate调小一点，有的数据集就是要小一点的。</li>
+</ul>
+</li>
+<li><p>关于效果</p>
+<p>用CIDEr会让CIDEr和Bleu变得很高，但是METEOR涨的不多，甚至后面会降。所以要加coverage一起提供reward。但光用这俩METEOR还是会差一点，于是后面迫不得已限制生成相同trigram的概率，见下面第二点。</p>
+</li>
+</ul>
+<h3 id="Important-points"><a href="#Important-points" class="headerlink" title="Important points"></a>Important points</h3><ul>
+<li><p>对feature用了batch norm，在最初对feature做处理的时候。在这套code里面好像很重要。</p>
+</li>
+<li><p>生成的时候降低生成同样三元组的概率。试过直接将概率降为0以及降低概率，降低的效果更好一些。因为tf不能直接改tensor值，只能借beam search的代码写。</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">if</span> trigram_force <span class="keyword">and</span> j &gt;= <span class="number">3</span>:</span><br><span class="line">    <span class="keyword">if</span> constraint_type == <span class="string">'reduce_prob'</span>:</span><br><span class="line">        prev_two = (sentence[<span class="number">-3</span>], sentence[<span class="number">-2</span>])</span><br><span class="line">        current = sentence[<span class="number">-1</span>]</span><br><span class="line"></span><br><span class="line">        <span class="keyword">if</span> prev_two <span class="keyword">in</span> trigrams:</span><br><span class="line">            trigrams[prev_two].append(current)</span><br><span class="line">        <span class="keyword">else</span>:</span><br><span class="line">            trigrams[prev_two] = [current]</span><br><span class="line"></span><br><span class="line">        mask = np.zeros_like(word_probabilities)</span><br><span class="line">        prev_two = (sentence[<span class="number">-2</span>], sentence[<span class="number">-1</span>])</span><br><span class="line">        <span class="keyword">if</span> prev_two <span class="keyword">in</span> trigrams:</span><br><span class="line">            <span class="keyword">for</span> wo <span class="keyword">in</span> trigrams[prev_two]:</span><br><span class="line">                mask[wo] += <span class="number">1</span></span><br><span class="line"></span><br><span class="line">        word_probabilities -= alpha*mask<span class="comment">#(alpha*0.693)*mask</span></span><br><span class="line"></span><br><span class="line">    <span class="keyword">elif</span> constraint_type == <span class="string">'set_zero_prob'</span>:</span><br><span class="line">        prev_two = (sentence[<span class="number">-3</span>], sentence[<span class="number">-2</span>])</span><br><span class="line">        current = sentence[<span class="number">-1</span>]</span><br><span class="line"></span><br><span class="line">        <span class="keyword">if</span> prev_two <span class="keyword">in</span> trigrams:</span><br><span class="line">            trigrams[prev_two].append(current)</span><br><span class="line">        <span class="keyword">else</span>:</span><br><span class="line">            trigrams[prev_two] = [current]</span><br><span class="line"></span><br><span class="line">        prev_two = (sentence[<span class="number">-2</span>], sentence[<span class="number">-1</span>])</span><br><span class="line">        <span class="keyword">if</span> prev_two <span class="keyword">in</span> trigrams:</span><br><span class="line">            <span class="keyword">for</span> wo <span class="keyword">in</span> trigrams[prev_two]:</span><br><span class="line">                word_probabilities[wo] = math.log(<span class="number">1e-12</span>)</span><br><span class="line">    <span class="keyword">else</span>:</span><br><span class="line">        <span class="keyword">print</span> (<span class="string">'Trigram Contraint Type Error!'</span>)</span><br></pre></td></tr></table></figure>
+</li>
+<li><p>testing的ground truth切成6句再做evaluation，虽然baseline paper里没写，但他们都是这么做的。（邮件问到的）</p>
+</li>
+<li><p>生成时没有判断生成几句，直接用了6句，因为砍短会降低METEOR的performance。</p>
+</li>
+</ul>
+<h2 id="后记"><a href="#后记" class="headerlink" title="后记"></a>后记</h2><p>写到这里大大小小就差不多了，后面还会再写一篇整个过程中曾经出现的思路和做过的尝试。</p>
+<p>感谢大师兄和pandy的全程指导，和男朋友一路的支持。</p>
+<p>2019年3月8日</p>
+<p>（END）</p>
 
             
 
@@ -325,7 +478,7 @@
     </nav>
     <ul class="post-actions post-action-share">
         <li class="post-action hide-lg hide-md hide-sm">
-            <a class="post-action-btn btn btn--default btn-open-shareoptions" href="#btn-open-shareoptions" aria-label="Diesen Beitrag teilen">
+            <a class="post-action-btn btn btn--default btn-open-shareoptions" href="#btn-open-shareoptions" aria-label="Share this post">
                 <i class="fa fa-share-alt" aria-hidden="true"></i>
             </a>
         </li>
@@ -410,7 +563,7 @@
     </nav>
     <ul class="post-actions post-action-share">
         <li class="post-action hide-lg hide-md hide-sm">
-            <a class="post-action-btn btn btn--default btn-open-shareoptions" href="#btn-open-shareoptions" aria-label="Diesen Beitrag teilen">
+            <a class="post-action-btn btn btn--default btn-open-shareoptions" href="#btn-open-shareoptions" aria-label="Share this post">
                 <i class="fa fa-share-alt" aria-hidden="true"></i>
             </a>
         </li>
