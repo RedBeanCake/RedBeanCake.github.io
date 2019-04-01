@@ -11,15 +11,21 @@
     
     
     
-    <script type="application/ld+json">{"@context":"http://schema.org","@type":"BlogPosting","author":{"@type":"Person","name":"JQ","sameAs":[],"image":"IMG_0076.JPG"},"articleBody":"","dateCreated":"2019-03-12T20:44:22+08:00","dateModified":"2019-03-12T20:44:22+08:00","datePublished":"2019-03-12T20:44:22+08:00","description":"","headline":"Paragraph Generation (番外)","image":[],"mainEntityOfPage":{"@type":"WebPage","@id":"http://yoursite.com/2019/03/12/Paragraph-Generation-番外/"},"publisher":{"@type":"Organization","name":"JQ","sameAs":[],"image":"IMG_0076.JPG","logo":{"@type":"ImageObject","url":"IMG_0076.JPG"}},"url":"http://yoursite.com/2019/03/12/Paragraph-Generation-番外/"}</script>
-    <meta property="og:type" content="blog">
+    <script type="application/ld+json">{"@context":"http://schema.org","@type":"BlogPosting","author":{"@type":"Person","name":"JQ","sameAs":[],"image":"IMG_0076.JPG"},"articleBody":"当时整个过程的研究思路。\n\n\n关于feature\n来自不同的方法\n\nDenseCap (faster-rcnn)\nbaseline feature\n\nMSDN (Relation-based networks)\n效果不好\n\nBottom-up attention (faster-rcnn))\n结合attention model效果很好\n\nbase不同的model\n用的bottom-up attention model\n\nResnet101\n效果那是极好的\n\nVGG16\n用在COCO上时效果要差一些，甚至和DenseCap (VGG16-based) feature效果差不多。幸好用在paragraph数据集上相比DenseCap feature居然会有提升，不然就gg了。\n\n\n\n\n关于attention丧心病狂的尝试\nparagraph-level attention在保留bottom-up attention双层结构的基础上多加一个paragraph lstm来构成双层attention的结构。由paragraph lstm产生一个topic vector作为sentence lstm的input。\n然而试了个把月，试过各种组合都没有提升，有很多甚至会降performance。考虑三层lstm的结构太heavy了对模型的学习没有益处，另外paragraph lstm也很难真正attend并学出topic之类的。\ndiverse and coverage  of attentionpandy师兄的idea，认为attention一方面应该diverse，另外所有attention应该互补，能cover到图上所有内容。\ndiverse参考Attention-based Ensemble for Deep Metric Learning\ncoverage参考On the Automatic Generation of Medical Imaging Reports\n不过用在我们的实验当中没什么作用。\nConvolutional sentence topics\nInspired by：\nTemporal Generative Adversarial Nets With Singular Value Clipping\n做video生成，用的是反卷积。两个generator，一个根据a single latent variable生成一系列vectors，另一个根据这些vectors生成一系列图片，对应于video中的一帧一帧。\nDeconvolutional Paragraph Representation\n\n将句子中的词embedding拼起来成为一个feature map，经过一系列卷积变成一个vector，再经过反卷积重构回去。（主要根据这篇）\n为了使用来卷积的feature对region排序不敏感\nNonlocal原版Non-local Neural Networks用过来比较耗显存，而且也一直没调收敛；\n后来有一个轻量版的Efficient Coarse-to-Fine Non-Local Module for the Detection of Small Objects，占显存小很多，然鹅用过来没什么用。\n3D points因为3D点云也面临如何arrange那些点的问题（点类比我们问题中的region，也需要考虑排序之类的），所以有参考几篇paper，不过也没有成功。List：\nA Graph-CNN for 3D Point Cloud Classification\nPointNet: Deep Learning on Point Sets for 3D Classification and Segmentation\nDeep Sets\n优化feature（算是）\nResidual BlockDeep Residual Learning for Image Recognition\nSqueeze and ExcitationSqueeze-and-Excitation Networks\n也没有明显效果。\n强化学习\nCoverage Reward这个没有paper原型，貌似是大师兄用在paper里的，不知道和我后来的做法是否一样。理解起来还是很直观的，让生成的名词和ground truth里的名词更加match。依然是手挑的vocabulary，先用Stanfordparser（大概是）做了词性分析，然后挑了top1k。\nCIDEr很稳定地会涨CIDEr和BLEU，但METEOR不涨。最开始实验的时候用了以前写的teacher forcing，导致一直抖动涨得不明显，后拉发现了去了就好了。\nMETEOR直接优化METEOR倒是会涨一些，可以超过state-of-the-art，但是其他两个指标会降。把METEOR和CIDEr一起用的时候，调权重就好像以前在家洗澡时调热水，一个不小心METEOR就挂了，一个不小心CIDEr就挂了。而且总的来说METEOR也不会涨很多，所以最后没有用这个指标来更新。\n###用Discriminator提供的reward\n走投无路的时候也试过，单句和段落的指标都试过，结果是类似的，CIDEr会涨，但METEOR不涨。换不同的数据集的话还是有尝试的意义，毕竟从前做storytelling的时候用discriminator会让METEOR涨得很明显，只是时间长了句子也会变长，所以后来有同时用teacher forcing。但teacher forcing也见仁见智吧。\n","dateCreated":"2019-03-12T20:44:22+08:00","dateModified":"2019-04-01T21:33:49+08:00","datePublished":"2019-03-12T20:44:22+08:00","description":"当时整个过程的研究思路。","headline":"Paragraph Generation (番外)","image":[],"mainEntityOfPage":{"@type":"WebPage","@id":"http://yoursite.com/2019/03/12/Paragraph-Generation-番外/"},"publisher":{"@type":"Organization","name":"JQ","sameAs":[],"image":"IMG_0076.JPG","logo":{"@type":"ImageObject","url":"IMG_0076.JPG"}},"url":"http://yoursite.com/2019/03/12/Paragraph-Generation-番外/","keywords":"research, vision and language, paragraph generation, 心得"}</script>
+    <meta name="description" content="当时整个过程的研究思路。">
+<meta name="keywords" content="research,vision and language,paragraph generation,心得">
+<meta property="og:type" content="blog">
 <meta property="og:title" content="Paragraph Generation (番外)">
 <meta property="og:url" content="http://yoursite.com/2019/03/12/Paragraph-Generation-番外/index.html">
 <meta property="og:site_name" content="JQ">
+<meta property="og:description" content="当时整个过程的研究思路。">
 <meta property="og:locale" content="zh-cn">
-<meta property="og:updated_time" content="2019-03-12T12:44:22.269Z">
+<meta property="og:image" content="http://yoursite.com/2019/03/12/Paragraph-Generation-番外/conv-deconv.png">
+<meta property="og:updated_time" content="2019-04-01T13:33:49.324Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="Paragraph Generation (番外)">
+<meta name="twitter:description" content="当时整个过程的研究思路。">
+<meta name="twitter:image" content="http://yoursite.com/2019/03/12/Paragraph-Generation-番外/conv-deconv.png">
     
     
         
@@ -171,6 +177,12 @@
     	
     </time>
     
+        <span>发布在 </span>
+        
+    <a class="category-link" href="/categories/my-research/">my research</a>
+
+
+    
 </div>
 
     
@@ -179,12 +191,77 @@
     
     <div class="post-content markdown">
         <div class="main-content-wrap">
-            
+            <p>当时整个过程的研究思路。</p>
+<a id="more"></a>
+<h1 id="table-of-contents">目录</h1><ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#关于feature"><span class="toc-text">关于feature</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#关于attention丧心病狂的尝试"><span class="toc-text">关于attention丧心病狂的尝试</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#paragraph-level-attention"><span class="toc-text">paragraph-level attention</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#diverse-and-coverage-of-attention"><span class="toc-text">diverse and coverage  of attention</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Convolutional-sentence-topics"><span class="toc-text">Convolutional sentence topics</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#为了使用来卷积的feature对region排序不敏感"><span class="toc-text">为了使用来卷积的feature对region排序不敏感</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#Nonlocal"><span class="toc-text">Nonlocal</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#3D-points"><span class="toc-text">3D points</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#优化feature（算是）"><span class="toc-text">优化feature（算是）</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#Residual-Block"><span class="toc-text">Residual Block</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#Squeeze-and-Excitation"><span class="toc-text">Squeeze and Excitation</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#强化学习"><span class="toc-text">强化学习</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#Coverage-Reward"><span class="toc-text">Coverage Reward</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#CIDEr"><span class="toc-text">CIDEr</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#METEOR"><span class="toc-text">METEOR</span></a></li></ol></li></ol>
+<h2 id="关于feature"><a href="#关于feature" class="headerlink" title="关于feature"></a>关于feature</h2><hr>
+<p><strong>来自不同的方法</strong></p>
+<ul>
+<li><p><a href="https://github.com/jcjohnson/densecap" target="_blank" rel="noopener">DenseCap (faster-rcnn)</a></p>
+<p>baseline feature</p>
+</li>
+<li><p><a href="https://github.com/yikang-li/MSDN" target="_blank" rel="noopener">MSDN (Relation-based networks)</a></p>
+<p>效果不好</p>
+</li>
+<li><p><a href="https://github.com/peteanderson80/bottom-up-attention" target="_blank" rel="noopener">Bottom-up attention (faster-rcnn)</a>)</p>
+<p>结合attention model效果很好</p>
+</li>
+<li><p><strong>base不同的model</strong></p>
+<p>用的bottom-up attention model</p>
+<ul>
+<li><p>Resnet101</p>
+<p>效果那是极好的</p>
+</li>
+<li><p>VGG16</p>
+<p>用在COCO上时效果要差一些，甚至和DenseCap (VGG16-based) feature效果差不多。幸好用在paragraph数据集上相比DenseCap feature居然会有提升，不然就gg了。</p>
+</li>
+</ul>
+</li>
+</ul>
+<h2 id="关于attention丧心病狂的尝试"><a href="#关于attention丧心病狂的尝试" class="headerlink" title="关于attention丧心病狂的尝试"></a>关于attention丧心病狂的尝试</h2><hr>
+<h3 id="paragraph-level-attention"><a href="#paragraph-level-attention" class="headerlink" title="paragraph-level attention"></a>paragraph-level attention</h3><p>在保留bottom-up attention双层结构的基础上多加一个paragraph lstm来构成双层attention的结构。由paragraph lstm产生一个topic vector作为sentence lstm的input。</p>
+<p>然而试了个把月，试过各种组合都没有提升，有很多甚至会降performance。考虑三层lstm的结构太heavy了对模型的学习没有益处，另外paragraph lstm也很难真正attend并学出topic之类的。</p>
+<h3 id="diverse-and-coverage-of-attention"><a href="#diverse-and-coverage-of-attention" class="headerlink" title="diverse and coverage  of attention"></a>diverse and coverage  of attention</h3><p>pandy师兄的idea，认为attention一方面应该diverse，另外所有attention应该互补，能cover到图上所有内容。</p>
+<p>diverse参考<a href="https://arxiv.org/abs/1804.00382" target="_blank" rel="noopener">Attention-based Ensemble for Deep Metric Learning</a></p>
+<p>coverage参考<a href="https://arxiv.org/abs/1711.08195" target="_blank" rel="noopener">On the Automatic Generation of Medical Imaging Reports</a></p>
+<p>不过用在我们的实验当中没什么作用。</p>
+<h2 id="Convolutional-sentence-topics"><a href="#Convolutional-sentence-topics" class="headerlink" title="Convolutional sentence topics"></a>Convolutional sentence topics</h2><hr>
+<p>Inspired by：</p>
+<p><a href="http://openaccess.thecvf.com/content_ICCV_2017/papers/Saito_Temporal_Generative_Adversarial_ICCV_2017_paper.pdf" target="_blank" rel="noopener">Temporal Generative Adversarial Nets With Singular Value Clipping</a></p>
+<p>做video生成，用的是反卷积。两个generator，一个根据a single latent variable生成一系列vectors，另一个根据这些vectors生成一系列图片，对应于video中的一帧一帧。</p>
+<p><a href="https://papers.nips.cc/paper/7005-deconvolutional-paragraph-representation-learning.pdf" target="_blank" rel="noopener">Deconvolutional Paragraph Representation</a></p>
+<p><img src="conv-deconv.png" alt=""></p>
+<p>将句子中的词embedding拼起来成为一个feature map，经过一系列卷积变成一个vector，再经过反卷积重构回去。（主要根据这篇）</p>
+<h2 id="为了使用来卷积的feature对region排序不敏感"><a href="#为了使用来卷积的feature对region排序不敏感" class="headerlink" title="为了使用来卷积的feature对region排序不敏感"></a>为了使用来卷积的feature对region排序不敏感</h2><hr>
+<h3 id="Nonlocal"><a href="#Nonlocal" class="headerlink" title="Nonlocal"></a>Nonlocal</h3><p>原版<a href="https://arxiv.org/abs/1711.07971" target="_blank" rel="noopener">Non-local Neural Networks</a>用过来比较耗显存，而且也一直没调收敛；</p>
+<p>后来有一个轻量版的<a href="https://arxiv.org/abs/1811.12152" target="_blank" rel="noopener">Efficient Coarse-to-Fine Non-Local Module for the Detection of Small Objects</a>，占显存小很多，然鹅用过来没什么用。</p>
+<h3 id="3D-points"><a href="#3D-points" class="headerlink" title="3D points"></a>3D points</h3><p>因为3D点云也面临如何arrange那些点的问题（点类比我们问题中的region，也需要考虑排序之类的），所以有参考几篇paper，不过也没有成功。List：</p>
+<p><a href="https://arxiv.org/abs/1812.01711" target="_blank" rel="noopener">A Graph-CNN for 3D Point Cloud Classification</a></p>
+<p><a href="https://arxiv.org/abs/1612.00593" target="_blank" rel="noopener">PointNet: Deep Learning on Point Sets for 3D Classification and Segmentation</a></p>
+<p><a href="https://papers.nips.cc/paper/6931-deep-sets" target="_blank" rel="noopener">Deep Sets</a></p>
+<h2 id="优化feature（算是）"><a href="#优化feature（算是）" class="headerlink" title="优化feature（算是）"></a>优化feature（算是）</h2><hr>
+<h3 id="Residual-Block"><a href="#Residual-Block" class="headerlink" title="Residual Block"></a>Residual Block</h3><p><a href="https://www.google.com.hk/url?sa=t&amp;rct=j&amp;q=&amp;esrc=s&amp;source=web&amp;cd=3&amp;ved=2ahUKEwiMk_-5_a7hAhWLMt4KHbOhAXoQFjACegQICRAB&amp;url=https%3A%2F%2Farxiv.org%2Fabs%2F1512.03385&amp;usg=AOvVaw0ko2RV0WsEDskyH0kl1EHN" target="_blank" rel="noopener">Deep Residual Learning for Image Recognition</a></p>
+<h3 id="Squeeze-and-Excitation"><a href="#Squeeze-and-Excitation" class="headerlink" title="Squeeze and Excitation"></a>Squeeze and Excitation</h3><p><a href="https://arxiv.org/abs/1709.01507" target="_blank" rel="noopener">Squeeze-and-Excitation Networks</a></p>
+<p>也没有明显效果。</p>
+<h2 id="强化学习"><a href="#强化学习" class="headerlink" title="强化学习"></a>强化学习</h2><hr>
+<h3 id="Coverage-Reward"><a href="#Coverage-Reward" class="headerlink" title="Coverage Reward"></a>Coverage Reward</h3><p>这个没有paper原型，貌似是大师兄用在paper里的，不知道和我后来的做法是否一样。理解起来还是很直观的，让生成的名词和ground truth里的名词更加match。依然是手挑的vocabulary，先用Stanfordparser（大概是）做了词性分析，然后挑了top1k。</p>
+<h3 id="CIDEr"><a href="#CIDEr" class="headerlink" title="CIDEr"></a>CIDEr</h3><p>很稳定地会涨CIDEr和BLEU，但METEOR不涨。最开始实验的时候用了以前写的teacher forcing，导致一直抖动涨得不明显，后拉发现了去了就好了。</p>
+<h3 id="METEOR"><a href="#METEOR" class="headerlink" title="METEOR"></a>METEOR</h3><p>直接优化METEOR倒是会涨一些，可以超过state-of-the-art，但是其他两个指标会降。把METEOR和CIDEr一起用的时候，调权重就好像以前在家洗澡时调热水，一个不小心METEOR就挂了，一个不小心CIDEr就挂了。而且总的来说METEOR也不会涨很多，所以最后没有用这个指标来更新。</p>
+<p>###用Discriminator提供的reward</p>
+<p>走投无路的时候也试过，单句和段落的指标都试过，结果是类似的，CIDEr会涨，但METEOR不涨。换不同的数据集的话还是有尝试的意义，毕竟从前做storytelling的时候用discriminator会让METEOR涨得很明显，只是时间长了句子也会变长，所以后来有同时用teacher forcing。但teacher forcing也见仁见智吧。</p>
+
             
 
         </div>
     </div>
     <div id="post-footer" class="post-footer main-content-wrap">
+        
+            <div class="post-footer-tags">
+                <span class="text-color-light text-small">标签</span><br>
+                
+    <a class="tag tag--primary tag--small t-link" href="/tags/paragraph-generation/">paragraph generation</a> <a class="tag tag--primary tag--small t-link" href="/tags/research/">research</a> <a class="tag tag--primary tag--small t-link" href="/tags/vision-and-language/">vision and language</a> <a class="tag tag--primary tag--small t-link" href="/tags/心得/">心得</a>
+
+            </div>
         
         
             <div class="post-actions-wrap">
@@ -245,7 +322,7 @@
         
         <li class="post-action">
             
-                <a class="post-action-btn btn btn--default" href="#" aria-label="Nach oben">
+                <a class="post-action-btn btn btn--default" href="#table-of-contents" aria-label="目录">
             
                 <i class="fa fa-list" aria-hidden="true"></i>
             </a>
@@ -330,7 +407,7 @@
         
         <li class="post-action">
             
-                <a class="post-action-btn btn btn--default" href="#" aria-label="Nach oben">
+                <a class="post-action-btn btn btn--default" href="#table-of-contents" aria-label="目录">
             
                 <i class="fa fa-list" aria-hidden="true"></i>
             </a>
